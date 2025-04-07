@@ -152,9 +152,9 @@ public class LinkGenerator {
             workbook.write(outputStream);
             workbook.close();
             outputStream.close();
-            controller.logInfo("Fayl hazırdır: " + file.getAbsolutePath());
-            controller.logInfo("<a href='#' onclick=openFile('" + file.getAbsolutePath().replace("\\", "\\\\") + "')>Faylı aç</a>; ");
-            controller.logInfo("<a href='#' onclick=openFolder('" + file.getAbsolutePath().replace("\\", "\\\\") + "')>Qovluğu aç</a>");
+            String filename = file.getAbsolutePath().replace("\\", "\\\\");
+            controller.logInfo("Fayl hazırdır: <a href='#' onclick=openFile('" + filename + "')>" + filename + "</a>; ");
+            controller.logInfo("<a href='#' onclick=openFolder('" + filename + "')>Qovluğu aç</a>");
         } catch (IOException e) {
             controller.logError(e.toString());
         }
