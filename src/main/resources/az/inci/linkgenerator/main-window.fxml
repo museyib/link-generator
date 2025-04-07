@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.*?>
+
+<HBox prefHeight="355.0" prefWidth="635.0" spacing="5.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="az.inci.linkgenerator.MainWindowController">
+  <padding>
+    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+  </padding>
+  <TextArea fx:id="invCodeList" prefWidth="150.0" />
+  <VBox minWidth="100" >
+    <Button fx:id="generateFromList" text="Siyahıdan" onAction="#onGenerateFromListClick"/>
+    <Button fx:id="generateForAll" text="Bütün mallar" onAction="#onGenerateForAllClick" />
+  </VBox>
+  <WebView fx:id="logView" prefWidth="400.0"  HBox.hgrow="ALWAYS"/>
+</HBox>
