@@ -141,13 +141,19 @@ public class LinkGenerator {
 
         try {
             File file = new File("Links.xlsx");
+
+            int n = 1;
+            while (file.exists()) {
+                file = new File("Links_" + n + ".xlsx");
+                n++;
+            }
             FileOutputStream outputStream = new FileOutputStream(file);
             workbook.setForceFormulaRecalculation(true);
             workbook.write(outputStream);
             workbook.close();
             outputStream.close();
-            controller.logInfo("Fayl hazırdır.");
-            controller.logInfo("<a href='#' onclick=openFile('" + file.getAbsolutePath().replace("\\", "\\\\") + "')>Faylı aç</a>");
+            controller.logInfo("Fayl hazırdır: " + file.getAbsolutePath());
+            controller.logInfo("<a href='#' onclick=openFile('" + file.getAbsolutePath().replace("\\", "\\\\") + "')>Faylı aç</a>; ");
             controller.logInfo("<a href='#' onclick=openFolder('" + file.getAbsolutePath().replace("\\", "\\\\") + "')>Qovluğu aç</a>");
         } catch (IOException e) {
             controller.logError(e.toString());

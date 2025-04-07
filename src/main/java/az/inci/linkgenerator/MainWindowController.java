@@ -1,18 +1,16 @@
 package az.inci.linkgenerator;
 
 
-import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.web.WebView;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import netscape.javascript.JSObject;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,10 +25,6 @@ public class MainWindowController {
     public Button generateFromList;
     @FXML
     public Button generateForAll;
-
-    @Setter
-    @FXML
-    private HostServices hostServices;
 
     @FXML
     public void initialize() {
@@ -126,15 +120,23 @@ public class MainWindowController {
 
     public void openFolder(String filePath) {
         if (filePath != null) {
-            File file = new File(filePath);
-            String folder = file.getParentFile().getAbsolutePath();
-            hostServices.showDocument("file:////" + folder.replace(file.getName(), "").replace('\\', '/'));
+            try {
+                Runtime.getRuntime().exec("explorer /select, " + filePath);
+            }
+            catch (IOException e) {
+                logError(e.toString());
+            }
         }
     }
 
     public void openFile(String filePath) {
         if (filePath != null) {
-            hostServices.showDocument("file:////" + filePath.replace('\\', '/'));
+            try {
+                Runtime.getRuntime().exec("explorer /open, " + filePath);
+            }
+            catch (IOException e) {
+                logError(e.toString());
+            }
         }
     }
 }

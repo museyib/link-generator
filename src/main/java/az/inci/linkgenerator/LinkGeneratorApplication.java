@@ -10,7 +10,6 @@ public class LinkGeneratorApplication extends Application {
     public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(LinkGeneratorApplication.class.getResource("main-window.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-        ((MainWindowController) fxmlLoader.getController()).setHostServices(getHostServices());
         stage.setTitle("Şəkillər üçün link generator");
         stage.setScene(scene);
         stage.show();
