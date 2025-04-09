@@ -1,34 +1,36 @@
 package az.inci.linkgenerator.service;
 
-import az.inci.linkgenerator.controller.MainWindowController;
 import az.inci.linkgenerator.data.InvItem;
 import az.inci.linkgenerator.util.Logger;
-import javafx.application.Platform;
+import az.inci.linkgenerator.util.UIInteraction;
 
 import java.util.Comparator;
 import java.util.List;
 
 public class LinkGenerator {
-
-    private final MainWindowController controller;
+    private final UIInteraction uiInteraction;
     private final Logger logger;
     private final InventoryService inventoryService;
     private final FileService fileService;
     private final FtpService ftpService;
 
-    public LinkGenerator(MainWindowController controller, Logger logger) {
-        this.controller = controller;
+    public LinkGenerator(UIInteraction uiInteraction,
+                         Logger logger,
+                         InventoryService inventoryService,
+                         FileService fileService,
+                         FtpService ftpService) {
+        this.uiInteraction = uiInteraction;
         this.logger = logger;
-        this.inventoryService = new InventoryService(logger);
-        this.fileService = new FileService(logger);
-        this.ftpService = new FtpService(logger);
+        this.inventoryService = inventoryService;
+        this.fileService = fileService;
+        this.ftpService = ftpService;
     }
 
     public void generateForSelected(List<String> selectedCodeList) {
         List<InvItem> invItemList = inventoryService.getSelection(selectedCodeList);
         if (invItemList.isEmpty()) {
             logger.logWarning("Daxil edilən kodlara uyğun mal tapılmadı.");
-            Platform.runLater(controller::focusOnInvCodeList);
+            uiInteraction.focusOnInvCodeList();
         }
         else {
             invItemList.sort(Comparator.comparing(InvItem::getInvCode));

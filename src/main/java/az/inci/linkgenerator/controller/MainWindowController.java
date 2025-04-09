@@ -1,9 +1,11 @@
 package az.inci.linkgenerator.controller;
 
 
-import az.inci.linkgenerator.service.LinkGenerator;
+import az.inci.linkgenerator.AppContext;
+import az.inci.linkgenerator.service.*;
 import az.inci.linkgenerator.util.Logger;
 import az.inci.linkgenerator.util.LoggerImpl;
+import az.inci.linkgenerator.util.UIInteraction;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
@@ -13,11 +15,10 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
-public class MainWindowController {
+public class MainWindowController implements UIInteraction {
     private final Logger logger = new LoggerImpl(this);
+    private final AppContext appContext = new AppContext(this, logger);
     @FXML
     private WebView logView;
     @FXML
@@ -45,19 +46,15 @@ public class MainWindowController {
 
         logView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == Worker.State.SUCCEEDED) {
+                JSObject window = (JSObject) logView.getEngine().executeScript("window");
+                window.setMember("javaApp", this);
                 logView.getEngine().executeScript("window.openFile = function(filePath) {javaApp.openFile(filePath); }");
                 logView.getEngine().executeScript("window.openFolder = function(folderPath) {javaApp.openFolder(folderPath); }");
             }
         });
-
-        logView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue == Worker.State.SUCCEEDED) {
-                JSObject window = (JSObject) logView.getEngine().executeScript("window");
-                window.setMember("javaApp", this);
-            }
-        });
     }
 
+    @Override
     public void logMessage(String message, String styleClass) {
         String escapeMessage = escapeJavaScript(message);
         Platform.runLater(() -> {
@@ -73,14 +70,7 @@ public class MainWindowController {
         });
     }
 
-    private String escapeJavaScript(String message) {
-        return message.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("'", "\\'")
-                .replace("\n", "\\n")
-                .replace("\r", "");
-    }
-
+    @Override
     public void disableControls(boolean disable) {
         Platform.runLater(() -> {
             generateForAll.setDisable(disable);
@@ -89,15 +79,24 @@ public class MainWindowController {
         });
     }
 
+    @Override
     public void focusOnInvCodeList() {
-        invCodeList.requestFocus();
+        Platform.runLater(() -> invCodeList.requestFocus());
+    }
+
+    private String escapeJavaScript(String message) {
+        return message.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("'", "\\'")
+                .replace("\n", "\\n")
+                .replace("\r", "");
     }
 
     @FXML
     public void onGenerateForAllClick() {
         disableControls(true);
         new Thread(() -> {
-            LinkGenerator linkGenerator = new LinkGenerator(this, logger);
+            LinkGenerator linkGenerator = appContext.getLinkGeneratorFactory().create();
             linkGenerator.generateForAll();
             disableControls(false);
         }).start();
@@ -105,29 +104,15 @@ public class MainWindowController {
 
     @FXML
     public void onGenerateFromListClick() {
-        disableControls(true);
-        List<String> codeList = Arrays.stream(invCodeList.getText()
-                        .replaceAll("\n", " ")
-                        .toLowerCase()
-                        .split(" ")).filter(s -> !s.isEmpty()).toList();
-        if (codeList.isEmpty()) {
-            logger.logWarning("Kod siyahısı boşdur. Ən azı 1 kod əlavə edin.");
-            invCodeList.requestFocus();
-        }
-        else {
-            new Thread(() -> {
-                LinkGenerator linkGenerator = new LinkGenerator(this, logger);
-                linkGenerator.generateForSelected(codeList);
-                disableControls(false);
-            }).start();
-        }
+        CodeListProcessor codeListProcessor = appContext.getCodeListProcessor(() -> invCodeList.getText());
+        codeListProcessor.handleGenerateFromListClick();
     }
 
     @SuppressWarnings("unused")
     public void openFolder(String filePath) {
         if (filePath != null) {
             try {
-                Runtime.getRuntime().exec("explorer /select, " + filePath);
+                Runtime.getRuntime().exec("explorer /select, \"" + filePath + "\"");
             }
             catch (IOException e) {
                 logger.logError(e.toString());
@@ -139,7 +124,7 @@ public class MainWindowController {
     public void openFile(String filePath) {
         if (filePath != null) {
             try {
-                Runtime.getRuntime().exec("explorer /open, " + filePath);
+                Runtime.getRuntime().exec("explorer \"" + filePath + "\"");
             }
             catch (IOException e) {
                 logger.logError(e.toString());
