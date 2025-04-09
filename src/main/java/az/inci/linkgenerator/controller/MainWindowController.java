@@ -1,30 +1,31 @@
-package az.inci.linkgenerator;
+package az.inci.linkgenerator.controller;
 
 
+import az.inci.linkgenerator.service.LinkGenerator;
+import az.inci.linkgenerator.util.Logger;
+import az.inci.linkgenerator.util.LoggerImpl;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.web.WebView;
-import lombok.extern.slf4j.Slf4j;
 import netscape.javascript.JSObject;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-@Slf4j
 public class MainWindowController {
-
+    private final Logger logger = new LoggerImpl(this);
     @FXML
-    public WebView logView;
+    private WebView logView;
     @FXML
-    public TextArea invCodeList;
+    private TextArea invCodeList;
     @FXML
-    public Button generateFromList;
+    private Button generateFromList;
     @FXML
-    public Button generateForAll;
+    private Button generateForAll;
 
     @FXML
     public void initialize() {
@@ -32,7 +33,9 @@ public class MainWindowController {
                 <html>
                 <head>
                     <style>
+                        body { background-color: #ddf; }
                         .log-info { color: blue }
+                        .log-warning { color: orange }
                         .log-error { color: red }
                     </style>
                 </head>
@@ -55,7 +58,7 @@ public class MainWindowController {
         });
     }
 
-    private void logMessage(String message, String styleClass) {
+    public void logMessage(String message, String styleClass) {
         String escapeMessage = escapeJavaScript(message);
         Platform.runLater(() -> {
             String js = """
@@ -70,18 +73,6 @@ public class MainWindowController {
         });
     }
 
-
-    public void logInfo(String info) {
-        logMessage("Info >> " + info, "log-info");
-        log.info(info);
-    }
-
-    public void logError(String error) {
-        logMessage("Error >> " + error, "log-error");
-        log.error(error);
-        disableControls(false);
-    }
-
     private String escapeJavaScript(String message) {
         return message.replace("\\", "\\\\")
                 .replace("\"", "\\\"")
@@ -94,48 +85,64 @@ public class MainWindowController {
         Platform.runLater(() -> {
             generateForAll.setDisable(disable);
             generateFromList.setDisable(disable);
+            invCodeList.setDisable(disable);
         });
+    }
+
+    public void focusOnInvCodeList() {
+        invCodeList.requestFocus();
     }
 
     @FXML
     public void onGenerateForAllClick() {
+        disableControls(true);
         new Thread(() -> {
-            LinkGenerator linkGenerator = new LinkGenerator(this, new DataSource(this));
+            LinkGenerator linkGenerator = new LinkGenerator(this, logger);
             linkGenerator.generateForAll();
+            disableControls(false);
         }).start();
     }
 
     @FXML
     public void onGenerateFromListClick() {
-        List<String> codeList = Arrays.asList(
-                invCodeList.getText()
+        disableControls(true);
+        List<String> codeList = Arrays.stream(invCodeList.getText()
                         .replaceAll("\n", " ")
                         .toLowerCase()
-                        .split(" "));
-        new Thread(() -> {
-            LinkGenerator linkGenerator = new LinkGenerator(this, new DataSource(this));
-            linkGenerator.generateForSelected(codeList);
-        }).start();
+                        .split(" ")).filter(s -> !s.isEmpty()).toList();
+        if (codeList.isEmpty()) {
+            logger.logWarning("Kod siyahısı boşdur. Ən azı 1 kod əlavə edin.");
+            invCodeList.requestFocus();
+        }
+        else {
+            new Thread(() -> {
+                LinkGenerator linkGenerator = new LinkGenerator(this, logger);
+                linkGenerator.generateForSelected(codeList);
+                disableControls(false);
+            }).start();
+        }
     }
 
+    @SuppressWarnings("unused")
     public void openFolder(String filePath) {
         if (filePath != null) {
             try {
                 Runtime.getRuntime().exec("explorer /select, " + filePath);
             }
             catch (IOException e) {
-                logError(e.toString());
+                logger.logError(e.toString());
             }
         }
     }
 
+    @SuppressWarnings("unused")
     public void openFile(String filePath) {
         if (filePath != null) {
             try {
                 Runtime.getRuntime().exec("explorer /open, " + filePath);
             }
             catch (IOException e) {
-                logError(e.toString());
+                logger.logError(e.toString());
             }
         }
     }

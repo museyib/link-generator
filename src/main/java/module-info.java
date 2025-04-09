@@ -17,4 +17,12 @@ module az.inci.invoiceconverter {
 
     exports az.inci.linkgenerator;
     opens az.inci.linkgenerator to javafx.fxml;
+    exports az.inci.linkgenerator.controller;
+    opens az.inci.linkgenerator.controller to javafx.fxml;
+    exports az.inci.linkgenerator.service;
+    opens az.inci.linkgenerator.service to javafx.fxml;
+    exports az.inci.linkgenerator.data;
+    opens az.inci.linkgenerator.data to javafx.fxml;
+    exports az.inci.linkgenerator.util;
+    opens az.inci.linkgenerator.util to javafx.fxml;
 }
